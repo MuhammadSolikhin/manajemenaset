@@ -26,7 +26,7 @@
             </div>
             <!-- /Logo -->
 
-            <h4 class="mb-2">Welcome to Asset Manager! 👋</h4>
+            <h4 class="mb-2">Welcome to Your App</h4>
             <p class="mb-4">Please sign-in to your account and start the adventure</p>
 
             <x-auth-session-status class="mb-4" :status="session('status')" />

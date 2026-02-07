@@ -10,12 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('journal_details', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->foreignId('journal_id')->constrained()->onDelete('cascade');
+            $table->foreignId('account_id')->constrained()->onDelete('cascade');
+            $table->decimal('debit', 15, 2)->default(0);
+            $table->decimal('credit', 15, 2)->default(0);
             $table->text('description')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -24,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('journal_details');
     }
 };
