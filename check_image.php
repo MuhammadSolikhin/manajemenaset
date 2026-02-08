@@ -13,3 +13,4 @@ if ($asset) {
 } else {
     echo "No asset with image found\n";
 }
+
