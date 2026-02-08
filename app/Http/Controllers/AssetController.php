@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
 use App\Models\Asset;
+use App\Models\Brand;
 use App\Models\Category;
+use App\Models\AssetUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +18,7 @@ class AssetController extends Controller
      */
     public function index()
     {
-        $query = Asset::with('category');
+        $query = Asset::with(['category', 'brand']);
 
         if (request('search')) {
             $query->where(function ($q) {
@@ -25,8 +27,19 @@ class AssetController extends Controller
             });
         }
 
+        if (request('category_id')) {
+            $query->where('category_id', request('category_id'));
+        }
+
+        if (request('brand_id')) {
+            $query->where('brand_id', request('brand_id'));
+        }
+
         $assets = $query->latest()->paginate(10);
-        return view('assets.index', compact('assets'));
+        $categories = Category::all();
+        $brands = Brand::all();
+        
+        return view('assets.index', compact('assets', 'categories', 'brands'));
     }
 
     /**
@@ -35,7 +48,8 @@ class AssetController extends Controller
     public function create()
     {
         $categories = Category::all();
-        return view('assets.create', compact('categories'));
+        $brands = Brand::all();
+        return view('assets.create', compact('categories', 'brands'));
     }
 
     /**
@@ -45,11 +59,33 @@ class AssetController extends Controller
     {
         $data = $request->validated();
 
+        // Remove parent_category_id - it's only for UI, not to be saved
+        unset($data['parent_category_id']);
+
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('assets', 'public');
         }
 
-        Asset::create($data);
+        $asset = Asset::create($data);
+
+        // Handle unit_identifiers from form (indexed array from dynamic fields)
+        $unitIdentifiers = $request->input('unit_identifiers', []);
+        if (!empty($unitIdentifiers)) {
+            foreach ($unitIdentifiers as $index => $identifier) {
+                $identifier = trim($identifier);
+                if (!empty($identifier)) {
+                    $exists = AssetUnit::where('asset_id', $asset->id)
+                        ->where('unique_identifier', $identifier)
+                        ->exists();
+                    if (!$exists) {
+                        AssetUnit::create([
+                            'asset_id' => $asset->id,
+                            'unique_identifier' => $identifier,
+                        ]);
+                    }
+                }
+            }
+        }
 
         return redirect()->route('assets.index')->with('success', 'Asset created successfully.');
     }
@@ -77,7 +113,8 @@ class AssetController extends Controller
     public function edit(Asset $asset)
     {
         $categories = Category::all();
-        return view('assets.edit', compact('asset', 'categories'));
+        $brands = Brand::all();
+        return view('assets.edit', compact('asset', 'categories', 'brands'));
     }
 
     /**
@@ -86,6 +123,9 @@ class AssetController extends Controller
     public function update(UpdateAssetRequest $request, Asset $asset)
     {
         $data = $request->validated();
+
+        // Remove parent_category_id - it's only for UI, not to be saved
+        unset($data['parent_category_id']);
 
         if ($request->hasFile('image')) {
             // Delete old image check
@@ -96,6 +136,48 @@ class AssetController extends Controller
         }
 
         $asset->update($data);
+
+        // Handle unit_identifiers from form (indexed array from dynamic fields)
+        $unitIdentifiers = $request->input('unit_identifiers', []);
+        
+        // Collect non-empty identifiers
+        $newIdentifiers = [];
+        foreach ($unitIdentifiers as $identifier) {
+            $identifier = trim($identifier);
+            if (!empty($identifier)) {
+                $newIdentifiers[] = $identifier;
+            }
+        }
+        
+        // Get existing units
+        $existingUnits = $asset->units;
+        $existingIdentifiers = $existingUnits->pluck('unique_identifier')->toArray();
+        
+        // Delete units that are no longer in the new list and are NOT attached to loans
+        foreach ($existingUnits as $unit) {
+            if (!in_array($unit->unique_identifier, $newIdentifiers)) {
+                // Check if unit is attached to any loan
+                $hasLoans = $unit->loans()->exists();
+                if (!$hasLoans) {
+                    $unit->forceDelete(); // Actually delete from database, not just soft delete
+                }
+            }
+        }
+        
+        // Create new units that don't exist yet - query database to be sure
+        if (!empty($newIdentifiers)) {
+            foreach ($newIdentifiers as $identifier) {
+                $exists = AssetUnit::where('asset_id', $asset->id)
+                    ->where('unique_identifier', $identifier)
+                    ->exists();
+                if (!$exists) {
+                    AssetUnit::create([
+                        'asset_id' => $asset->id,
+                        'unique_identifier' => $identifier,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('assets.index')->with('success', 'Asset updated successfully.');
     }
@@ -109,7 +191,7 @@ class AssetController extends Controller
             Storage::disk('public')->delete($asset->image);
         }
 
-        $asset->delete();
+        $asset->forceDelete();
 
         return redirect()->route('assets.index')->with('success', 'Asset deleted successfully.');
     }

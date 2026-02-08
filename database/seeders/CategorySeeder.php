@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
@@ -12,19 +13,10 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = [
-            'Elektronik' => 'Perangkat elektronik seperti laptop, komputer, dan printer.',
-            'Furniture' => 'Perabotan kantor seperti meja, kursi, dan lemari.',
-            'Kendaraan' => 'Kendaraan operasional kantor.',
-            'Mesin' => 'Mesin industri dan peralatan berat.',
-            'Peralatan Kantor' => 'Alat tulis dan perlengkapan kantor lainnya.',
-        ];
+        $categories = ['Electronics', 'Furniture', 'Vehicles', 'Stationery', 'Machinery'];
 
-        foreach ($categories as $name => $description) {
-            Category::firstOrCreate(
-                ['name' => $name],
-                ['description' => $description]
-            );
+        foreach ($categories as $category) {
+            Category::firstOrCreate(['name' => $category]);
         }
     }
 }

@@ -13,13 +13,20 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $query = Category::withCount('assets');
+        $query = Category::with('children')->withCount('assets');
 
         if (request('search')) {
-            $query->where('name', 'like', '%' . request('search') . '%');
+            $searchTerm = '%' . request('search') . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhereHas('children', function ($child) use ($searchTerm) {
+                      $child->where('name', 'like', $searchTerm);
+                  });
+            });
         }
 
-        $categories = $query->latest()->paginate(10);
+        // Show only parent categories
+        $categories = $query->whereNull('parent_category_id')->latest()->paginate(10);
         return view('categories.index', compact('categories'));
     }
 
@@ -28,7 +35,8 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        return view('categories.create');
+        $parentCategories = Category::whereNull('parent_category_id')->get();
+        return view('categories.create', compact('parentCategories'));
     }
 
     /**
@@ -45,7 +53,8 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
-        return view('categories.edit', compact('category'));
+        $parentCategories = Category::whereNull('parent_category_id')->where('id', '!=', $category->id)->get();
+        return view('categories.edit', compact('category', 'parentCategories'));
     }
 
     /**
@@ -66,7 +75,12 @@ class CategoryController extends Controller
             return back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh aset.');
         }
 
-        $category->delete();
+        if ($category->children()->exists()) {
+            return back()->with('error', 'Kategori tidak dapat dihapus karena memiliki subcategory.');
+        }
+
+        $category->forceDelete();
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil dihapus.');
     }
+
 }
