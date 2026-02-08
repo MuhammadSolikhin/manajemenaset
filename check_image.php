@@ -1,4 +1,5 @@
 <?php
+
 $asset = \App\Models\Asset::whereNotNull('image')->first();
 if ($asset) {
     echo "Asset ID: {$asset->id}\n";
