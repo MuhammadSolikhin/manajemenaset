@@ -13,7 +13,9 @@ class Asset extends Model
     protected $fillable = [
         'name',
         'asset_code',
+        'quantity',
         'category_id',
+        'brand_id',
         'status',
         'purchase_date',
         'price',
@@ -33,9 +35,19 @@ class Asset extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     public function loans()
     {
         return $this->hasMany(AssetLoan::class);
+    }
+
+    public function units()
+    {
+        return $this->hasMany(AssetUnit::class);
     }
 
     public function activeLoan()

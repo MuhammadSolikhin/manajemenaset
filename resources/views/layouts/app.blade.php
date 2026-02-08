@@ -11,9 +11,10 @@
   <title>{{ config('app.name', 'Laravel') }}</title>
 
   <meta name="description" content="" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
 
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+  <link rel="icon" type="image/png" href="{{ asset('assets/img/logo.png') }}" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -50,7 +51,94 @@
     <div class="layout-container">
       <!-- Menu -->
 
-      @include('layouts.sections.menu.sidebar')
+      <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+        <div class="app-brand demo">
+          <a href="{{ url('/') }}" class="app-brand-link" style="align-items: center;">
+            <img src="{{ asset('assets/img/logo.png') }}" alt="Logo" class="me-2" style="width: 32px; height: 32px;">
+            <span class="app-brand-text demo menu-text fw-bolder" style="white-space: normal; line-height: 1.1; max-width: 160px; text-transform: none;">
+              {{ ucwords(config('app.name', 'Manajemen Aset')) }}
+            </span>
+          </a>
+
+          <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+            <i class="bx bx-chevron-left bx-sm align-middle"></i>
+          </a>
+        </div>
+
+        <div class="menu-inner-shadow"></div>
+
+        <ul class="menu-inner py-1">
+          <!-- Dashboard -->
+          <li class="menu-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-home-circle"></i>
+              <div data-i18n="Analytics">Dashboard</div>
+            </a>
+          </li>
+
+          @if((Auth::user()->role ?? 'karyawan') === 'super_admin')
+            <li class="menu-header small text-uppercase"><span class="menu-header-text">Admin</span></li>
+            <li class="menu-item {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
+              <a href="{{ route('admin.users.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user"></i>
+                <div data-i18n="ManageUsers">Kelola Akun</div>
+              </a>
+            </li>
+          @endif
+
+          <!-- Asset Management -->
+          <li class="menu-header small text-uppercase"><span class="menu-header-text">Assets</span></li>
+          @if(in_array((Auth::user()->role ?? 'karyawan'), ['admin', 'super_admin'], true))
+            <li class="menu-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
+              <a href="{{ route('categories.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-category"></i>
+                <div data-i18n="Categories">Kategori</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('brands.*') ? 'active' : '' }}">
+              <a href="{{ route('brands.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-tag"></i>
+                <div data-i18n="Brands">Brand</div>
+              </a>
+            </li>
+          @endif
+          <li class="menu-item {{ request()->routeIs('assets.*') ? 'active' : '' }}">
+            <a href="{{ route('assets.index') }}" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-box"></i>
+              <div data-i18n="Asset List">Daftar Aset</div>
+            </a>
+          </li>
+          @if(in_array((Auth::user()->role ?? 'karyawan'), ['admin', 'super_admin'], true))
+            <li class="menu-item {{ request()->routeIs('units.*') ? 'active' : '' }}">
+              <a href="{{ route('units.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-cube"></i>
+                <div data-i18n="Units">Unit Aset</div>
+              </a>
+            </li>
+          @endif
+          <li class="menu-item {{ (request()->routeIs('loans.*') && !request()->routeIs('loans.returned')) ? 'active' : '' }}">
+            <a href="{{ route('loans.index') }}" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-archive"></i>
+              <div data-i18n="Loans">Peminjaman</div>
+            </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('loans.returned') ? 'active' : '' }}">
+            <a href="{{ route('loans.returned') }}" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-history"></i>
+              <div data-i18n="Returns">Riwayat Pengembalian</div>
+            </a>
+          </li>
+          @if(in_array((Auth::user()->role ?? 'karyawan'), ['admin', 'super_admin'], true))
+            <li class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+              <a href="{{ route('reports.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file"></i>
+                <div data-i18n="Reports">Laporan</div>
+              </a>
+            </li>
+          @endif
+        </ul>
+      </aside>
+      <!-- / Menu -->
 
       <!-- Layout container -->
       <div class="layout-page">
@@ -81,22 +169,22 @@
               <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                   <div class="avatar avatar-online">
-                    <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle" />
+                    <img src="{{ Auth::user()->profile_photo_path ? asset('storage/' . Auth::user()->profile_photo_path) : asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle" />
                   </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
-                    <a class="dropdown-item" href="#">
+                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
                       <div class="d-flex">
                         <div class="flex-shrink-0 me-3">
                           <div class="avatar avatar-online">
-                            <img src="{{ asset('assets/img/avatars/1.png') }}" alt
+                            <img src="{{ Auth::user()->profile_photo_path ? asset('storage/' . Auth::user()->profile_photo_path) : asset('assets/img/avatars/1.png') }}" alt
                               class="w-px-40 h-auto rounded-circle" />
                           </div>
                         </div>
                         <div class="flex-grow-1">
                           <span class="fw-semibold d-block">{{ Auth::user()->name ?? 'User' }}</span>
-                          <small class="text-muted">Admin</small>
+                          <small class="text-muted">{{ ucfirst(Auth::user()->role ?? 'karyawan') }}</small>
                         </div>
                       </div>
                     </a>
@@ -140,7 +228,7 @@
                 <script>
                   document.write(new Date().getFullYear());
                 </script>
-                , made with ❤️
+                , PT Azkayra Group
               </div>
             </div>
           </footer>

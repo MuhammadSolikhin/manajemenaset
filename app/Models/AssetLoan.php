@@ -9,6 +9,8 @@ class AssetLoan extends Model
 {
     protected $fillable = [
         'asset_id',
+        'quantity_borrowed',
+        'original_quantity',
         'user_id',
         'loan_date',
         'return_date',
@@ -19,6 +21,7 @@ class AssetLoan extends Model
     protected $casts = [
         'loan_date' => 'date',
         'return_date' => 'date',
+        'original_quantity' => 'integer',
     ];
 
     public function asset(): BelongsTo
@@ -29,5 +32,10 @@ class AssetLoan extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function units()
+    {
+        return $this->belongsToMany(AssetUnit::class, 'asset_loan_units', 'asset_loan_id', 'asset_unit_id')->withTimestamps();
     }
 }

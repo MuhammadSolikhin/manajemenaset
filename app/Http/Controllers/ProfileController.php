@@ -26,7 +26,18 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('profile_photo')) {
+            $user = $request->user();
+            if ($user->profile_photo_path && \Storage::disk('public')->exists($user->profile_photo_path)) {
+                \Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $data['profile_photo_path'] = $request->file('profile_photo')->store('profiles', 'public');
+        }
+
+        $request->user()->fill($data);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -50,7 +61,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        $user->forceDelete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

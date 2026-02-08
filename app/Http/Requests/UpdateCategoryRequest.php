@@ -16,6 +16,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($this->category)],
+            'parent_category_id' => 'nullable|exists:categories,id',
         ];
     }
 }

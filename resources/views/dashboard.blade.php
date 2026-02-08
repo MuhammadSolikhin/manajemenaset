@@ -1,6 +1,7 @@
 <x-app-layout>
+    @if(in_array((Auth::user()->role ?? 'karyawan'), ['admin', 'super_admin'], true))
     <div class="row mb-4">
-        <div class="col-lg-4 col-md-4 order-1">
+        <div class="col-lg-3 col-md-6 order-1">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -8,12 +9,25 @@
                             <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-cube"></i></span>
                         </div>
                     </div>
-                    <span class="fw-semibold d-block mb-1">Total Aset</span>
+                    <span class="fw-semibold d-block mb-1">Total Aset (types)</span>
                     <h3 class="card-title mb-2">{{ $totalAssets }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-4 order-2">
+        <div class="col-lg-3 col-md-6 order-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title d-flex align-items-start justify-content-between">
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-info"><i class="bx bx-cube"></i></span>
+                        </div>
+                    </div>
+                    <span class="fw-semibold d-block mb-1">Total Units</span>
+                    <h3 class="card-title mb-2">{{ $totalUnits ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 order-3">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -21,12 +35,12 @@
                             <span class="avatar-initial rounded bg-label-success"><i class="bx bx-check-circle"></i></span>
                         </div>
                     </div>
-                    <span class="fw-semibold d-block mb-1">Available</span>
-                    <h3 class="card-title mb-2">{{ $availableAssets }}</h3>
+                    <span class="fw-semibold d-block mb-1">Available Units</span>
+                    <h3 class="card-title mb-2">{{ $availableUnits ?? 0 }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-4 order-3">
+        <div class="col-lg-3 col-md-6 order-4">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -34,8 +48,8 @@
                             <span class="avatar-initial rounded bg-label-warning"><i class="bx bx-user"></i></span>
                         </div>
                     </div>
-                    <span class="fw-semibold d-block mb-1">Deployed</span>
-                    <h3 class="card-title mb-2">{{ $deployedAssets }}</h3>
+                    <span class="fw-semibold d-block mb-1">Units In Use</span>
+                    <h3 class="card-title mb-2">{{ $borrowedUnits ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -47,9 +61,9 @@
                 <div class="d-flex align-items-end row">
                     <div class="col-sm-7">
                         <div class="card-body">
-                            <h5 class="card-title text-primary">Welcome Back, {{ Auth::user()->name }}! 🎉</h5>
+                            <h5 class="card-title text-primary">Welcome Back, {{ Auth::user()->name }}! </h5>
                             <p class="mb-4">
-                                You have successfully logged in as <span class="fw-bold">Admin</span>. Check your asset
+                                You have successfully logged in as <span class="fw-bold">{{ ucfirst(Auth::user()->role ?? 'karyawan') }}</span>. Check your asset
                                 status below.
                             </p>
 
@@ -67,4 +81,45 @@
             </div>
         </div>
     </div>
+    @else
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Peminjaman Aktif</span>
+                    <h3 class="card-title mb-2">{{ $myBorrowed ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Total Unit Dipinjam</span>
+                    <h3 class="card-title mb-2">{{ $myBorrowedUnits ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Riwayat Pengembalian</span>
+                    <h3 class="card-title mb-2">{{ $myReturned ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 mb-4 order-0">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Welcome Back, {{ Auth::user()->name }}! </h5>
+                    <p class="mb-4">Silakan kelola peminjaman dan pengembalian aset Anda.</p>
+                    <a href="{{ route('loans.index') }}" class="btn btn-sm btn-outline-primary me-2">Peminjaman Saya</a>
+                    <a href="{{ route('loans.returned') }}" class="btn btn-sm btn-outline-secondary">Riwayat Pengembalian</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </x-app-layout>

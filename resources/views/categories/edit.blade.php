@@ -9,6 +9,19 @@
                 @csrf
                 @method('PUT')
                 <div class="mb-3">
+                    <label class="form-label" for="parent_category_id">Kategori Parent (Opsional)</label>
+                    <select class="form-select" id="parent_category_id" name="parent_category_id">
+                        <option value="">-- Tidak Ada (Kategori Utama) --</option>
+                        @foreach($parentCategories as $parent)
+                            <option value="{{ $parent->id }}" {{ old('parent_category_id', $category->parent_category_id) == $parent->id ? 'selected' : '' }}>
+                                {{ $parent->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('parent_category_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label" for="name">Nama Kategori</label>
                     <input type="text" class="form-control" id="name" name="name"
                         value="{{ old('name', $category->name) }}" required />
